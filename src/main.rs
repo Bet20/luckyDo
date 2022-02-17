@@ -7,6 +7,9 @@ use chrono::prelude::*;
 use ansi_term::Colour::*;
 use ansi_term::Style;
 use rand::Rng;
+use std::fs::File;
+use std::io::BufReader;
+use std::path::Path;
 
 #[derive(Debug)]
 struct Todo {
@@ -53,6 +56,15 @@ impl CookieDB {
         let n: f64 = rng.gen_range(0.0..self.Cookies.len() as f64);
         return &self.Cookies[n as usize];
     }
+
+    fn save(&self) -> std::io::Result<()> {
+        let mut file = File::create("todo.md")?;
+        let path = Path::new("./todo.md");
+        for n in &self.Cookies {
+            fs::write(&path, "[ ] ".to_string() + n);
+        }
+        Ok(())
+    }
 }
 
 enum Action {
@@ -67,7 +79,7 @@ enum Action {
 fn main() {
     let args: Vec<String> = env::args().collect();
     let action = &args[2];
-    let enabled = ansi_term::enable_ansi_support();
+    //let enabled = ansi_term::enable_ansi_support();
 //    let todo = Todo::new("Do bed".to_string(), false, "1422-02-10".to_string());
 
     let read = fs::read_to_string("src/cookies.txt")
@@ -88,9 +100,11 @@ fn main() {
             )
         },
         Action::Daily => {
+            let mut newTodos: Vec<Todo> = Vec::new();
             loop {
                 let a = dreadTodoFromTerminal()
                     .expect("Quitting...");
+                newTodos.push(a);
             }
         },
         Action::Keeper => (),
@@ -128,7 +142,7 @@ fn parseCommands(command: Vec<String>) -> Action {
         "d" => Action::Daily,
         "k" => Action::Keeper,
         "l" => Action::List,
-        "h" =>Action::Help,
+        "h" => Action::Help,
         "help" => Action::HelpVerbose,
         _ => Action::Nothing
     }
